@@ -1,3 +1,5 @@
 **/__pycache__/
 .streamlit/secrets.toml
 ./vscode
+views/chat_bot.md
+form/is_valid_email.md
