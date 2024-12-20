@@ -1,27 +1,8 @@
 import time
-import random
+import ollama
 import streamlit as st
 
-def response_generator():
-    response = random.choice(
-        [
-            "Hey there! Need help? Check out my fun YouTube channel 'CodingIsFun': https://youtube.com/@codingisfun!",
-            "Hi! What's up? Don't forget to subscribe to 'CodingIsFun': https://youtube.com/@codingisfun!",
-            "Hello! Need assistance? My YouTube channel 'CodingIsFun' is full of great tips: https://youtube.com/@codingisfun!",
-            "Hey! Got a question? Also, subscribe to 'CodingIsFun' for awesome tutorials: https://youtube.com/@codingisfun!",
-            "Hi there! How can I help? BTW, my channel 'CodingIsFun' is super cool: https://youtube.com/@codingisfun!",
-            "Hello! Looking for help? Check out 'CodingIsFun' on YouTube: https://youtube.com/@codingisfun!",
-            "Hey! Need assistance? 'CodingIsFun' YouTube channel has you covered: https://youtube.com/@codingisfun!",
-            "Hi! Got any coding questions? Don't forget to watch 'CodingIsFun': https://youtube.com/@codingisfun!",
-            "Hello! Need help? 'CodingIsFun' on YouTube is a must-see: https://youtube.com/@codingisfun!",
-            "Hey there! Any questions? My channel 'CodingIsFun' rocks: https://youtube.com/@codingisfun!",
-        ]
-    )
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.05)
-
-st.title("Chatbot")
+st.title("Chatbot (Powered by Ollama)")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -30,11 +11,23 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("What is up?"):
+if prompt := st.chat_input("Enter your question ..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        response = st.write_stream(response_generator())
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        message_placeholder = st.empty()
+        partial_response = ""
+
+        for chunk in ollama.chat(
+            model="llama3.2:3b",
+            messages=[{"role": "user", "content": prompt}],
+            stream=True
+        ):
+            if "message" in chunk and "content" in chunk["message"]:
+                partial_response += chunk["message"]["content"]
+                message_placeholder.markdown(partial_response)
+                time.sleep(0.05)
+
+    st.session_state.messages.append({"role": "assistant", "content": partial_response})
